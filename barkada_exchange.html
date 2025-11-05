@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Barkada Exchange Gift — Draw Lots (Christmas)</title>
+  <style>
+    /* Simple Christmas theme styles */
+    :root{--bg:#0b2b17;--card:#072b20;--accent:#e63946;--accent2:#ffd166;--text:#f8f9fa}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#042018 0%, #071a12 60%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));border-radius:14px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)}
+    header{display:flex;align-items:center;gap:16px}
+    header h1{margin:0;font-size:20px}
+    .sub{opacity:0.85;font-size:13px;margin-top:6px}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:18px;margin-top:18px}
+    .card{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+
+    label{display:block;font-size:13px;margin-bottom:6px}
+    input[type=text], input[type=password], textarea, select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text)}
+    button{cursor:pointer;padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;font-weight:600}
+    small{opacity:0.9}
+
+    .participants{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .pitem{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,0.15)}
+    .pname{font-weight:600}
+    .pass{font-family:monospace;background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:6px}
+
+    .log{height:160px;overflow:auto;background:rgba(0,0,0,0.08);padding:8px;border-radius:8px;font-size:13px}
+
+    footer{margin-top:14px;text-align:center;color:rgba(255,255,255,0.7);font-size:13px}
+
+    /* Decorative */
+    .christmas{display:flex;gap:12px;align-items:center}
+    .orn{width:46px;height:46px;border-radius:50%;background:linear-gradient(180deg,var(--accent) 0%, #b31217 100%);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:20px;box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+
+    @media(max-width:880px){.grid{grid-template-columns:1fr;}.participants{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="christmas">
+        <div class="orn">🎄</div>
+      </div>
+      <div>
+        <h1>Barkada Exchange Gift — Virtual Draw Lots (Christmas UI)</h1>
+        <div class="sub">Organizer: create encrypted assignments. Only participants with their password can reveal their theme. Organizer will only see passwords — not themes.</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Setup (Organizer)</h2>
+        <p><small>Participants and themes are prefilled. You will generate a unique password for each member and create encrypted assignments. Download the encrypted file and share each person's password privately. <strong>Do not share the encrypted file's content publicly.</strong></small></p>
+
+        <label>Participants (one per line)</label>
+        <textarea id="participants" rows="6">Shan
+Ayessa
+Allen
+Princess
+Renzo
+Yvanne
+Judd
+Asu
+Erika
+Kiana</textarea>
+
+        <label>Themes (one per line — must match number of participants)</label>
+        <textarea id="themes" rows="8">Something Cute
+Something Funny
+Something That Smells Good
+Something for Work/Study
+Something Small but Meaningful
+Something with Sound
+Something That Reminds You of the Group
+Something Colorful
+Something Random
+Something Fluffy</textarea>
+
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button id="gen">Generate Passwords & Encrypt Assignments</button>
+          <button id="download-json" disabled>Download Encrypted Assignments (JSON)</button>
+          <button id="download-csv" disabled>Download Passwords CSV</button>
+        </div>
+
+        <h3 style="margin-top:12px">Participants & Passwords</h3>
+        <div class="participants" id="plist"></div>
+
+        <h3 style="margin-top:12px">Organizer Log</h3>
+        <div id="log" class="log"></div>
+      </div>
+
+      <div class="card">
+        <h2>Participant Login</h2>
+        <p><small>If you're a participant, enter your name and the password you received from the organizer to reveal your assigned theme. The site only tries to decrypt assignments — the organizer cannot see themes unless they know the person's password.</small></p>
+
+        <label>Your Name</label>
+        <input type="text" id="pname" placeholder="Your name" />
+        <label>Password</label>
+        <input type="password" id="ppass" placeholder="Enter password" />
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="reveal">Reveal My Theme</button>
+          <button id="load-json">Load Encrypted JSON</button>
+          <input id="file-in" type="file" accept="application/json" style="display:none" />
+        </div>
+
+        <div id="result" style="margin-top:16px"></div>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)" />
+        <small>Privacy & security notes:</small>
+        <ul>
+          <li><small>The organizer will <em>not</em> see themes because they won't have participants' passwords.</small></li>
+          <li><small>All encryption/decryption is done in your browser. No data is sent anywhere.</small></li>
+          <li><small>Keep your password private. If lost, the organizer can regenerate assignments and issue new passwords.</small></li>
+        </ul>
+      </div>
+    </div>
+
+    <footer>Made with Christmas spirit 🎁 — Keep it secret, keep it fun!</footer>
+  </div>
+
+  <script>
+    // Utilities
+    function log(msg){const el=document.getElementById('log');el.innerHTML+=(new Date()).toLocaleTimeString()+" — "+msg+"\n";el.scrollTop=el.scrollHeight}
+    function randPassword(len=9){const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@';let s='';for(let i=0;i<len;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s}
+
+    // Encoding helpers
+    const enc = new TextEncoder(); const dec = new TextDecoder();
+    function bufToB64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
+    function b64ToBuf(b64){const s=atob(b64);const arr=new Uint8Array(s.length);for(let i=0;i<s.length;i++)arr[i]=s.charCodeAt(i);return arr.buffer}
+
+    // Crypto helpers using Web Crypto API
+    async function deriveKey(password, salt){
+      const pwKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:250000,hash:'SHA-256'}, pwKey, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+    }
+    async function encryptWithPassword(password, plaintext){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveKey(password, salt);
+      const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv:iv}, key, enc.encode(plaintext));
+      return {salt:bufToB64(salt.buffer), iv:bufToB64(iv.buffer), ct:bufToB64(ct)};
+    }
+    async function decryptWithPassword(password, payload){
+      try{
+        const salt = b64ToBuf(payload.salt);
+        const iv = b64ToBuf(payload.iv);
+        const ct = b64ToBuf(payload.ct);
+        const key = await deriveKey(password, salt);
+        const pt = await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)}, key, ct);
+        return dec.decode(pt);
+      }catch(e){return null}
+    }
+
+    // Shuffle array
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+
+    document.getElementById('gen').addEventListener('click', async ()=>{
+      const ptxt = document.getElementById('participants').value.trim();
+      const ttxt = document.getElementById('themes').value.trim();
+      if(!ptxt || !ttxt){alert('Please fill participants and themes.');return}
+      const participants = ptxt.split('\n').map(s=>s.trim()).filter(Boolean);
+      const themes = ttxt.split('\n').map(s=>s.trim()).filter(Boolean);
+      if(participants.length!==themes.length){alert('Participants and themes count must match.');return}
+
+      // Shuffle themes then assign
+      const shuffledThemes = shuffle(themes.slice());
+
+      const assignments = [];
+      const passwords = [];
+      document.getElementById('plist').innerHTML='';
+
+      for(let i=0;i<participants.length;i++){
+        const name = participants[i];
+        const pw = randPassword(9);
+        passwords.push({name, password:pw});
+        // encrypt the theme with the participant's password
+        const encPayload = await encryptWithPassword(pw, shuffledThemes[i]);
+        assignments.push({name, payload:encPayload});
+
+        // show name & password for organizer
+        const node = document.createElement('div'); node.className='pitem';
+        node.innerHTML=`<div class="pname">${name}</div><div style="display:flex;gap:8px;align-items:center"><div class="pass">${pw}</div><button data-name="${name}">Copy</button></div>`;
+        node.querySelector('button').addEventListener('click', ()=>{navigator.clipboard.writeText(pw);log('Copied password for '+name)});
+        document.getElementById('plist').appendChild(node);
+      }
+
+      // prepare encrypted JSON for download (contains names + encrypted blobs, but no passwords)
+      const blob = new Blob([JSON.stringify({meta:{created:new Date().toISOString(),note:'encrypted assignments'},assignments},null,2)],{type:'application/json'});
+      const jsonUrl = URL.createObjectURL(blob);
+      const dlJson = document.getElementById('download-json'); dlJson.disabled=false; dlJson.onclick=()=>{const a=document.createElement('a');a.href=jsonUrl;a.download='encrypted-assignments.json';a.click();}
+
+      // prepare CSV passwords for organizer to save/send (name,password)
+      const csv = 'name,password\n'+passwords.map(r=>`"${r.name}","${r.password}"`).join('\n');
+      const csvBlob=new Blob([csv],{type:'text/csv'}); const csvUrl=URL.createObjectURL(csvBlob);
+      const dlCsv=document.getElementById('download-csv'); dlCsv.disabled=false; dlCsv.onclick=()=>{const a=document.createElement('a');a.href=csvUrl;a.download='passwords.csv';a.click();}
+
+      window._encryptedAssignments = {assignments}; // keep in memory for quick load if participant uses same browser
+
+      log('Generated encrypted assignments. Download JSON and distribute passwords privately.');
+    });
+
+    // Participant actions
+    document.getElementById('load-json').addEventListener('click', ()=>document.getElementById('file-in').click());
+    document.getElementById('file-in').addEventListener('change', (e)=>{
+      const f=e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{try{window._loadedAssignments=JSON.parse(reader.result).assignments; log('Encrypted assignments loaded from file.'); alert('Encrypted file loaded — now enter your name and password and click Reveal My Theme.');}catch(err){alert('Invalid JSON file.')} }; reader.readAsText(f);
+    });
+
+    document.getElementById('reveal').addEventListener('click', async ()=>{
+      const name = (document.getElementById('pname').value||'').trim();
+      const pass = (document.getElementById('ppass').value||'').trim();
+      if(!name || !pass){alert('Enter your name and password');return}
+      const assignments = window._loadedAssignments || (window._encryptedAssignments && window._encryptedAssignments.assignments);
+      if(!assignments){alert('No encrypted assignments loaded. Organizer: please create and share the encrypted JSON file, or load it here.');return}
+
+      // Try to decrypt each entry using provided password until one succeeds AND the named entry matches (optional check)
+      let found=null;
+      for(const a of assignments){
+        // If organizer omitted names matching or you want to ensure name matches, we decrypt only if a.name==name
+        if(a.name !== name) continue; // ensure you only try to decrypt your own named entry
+        const theme = await decryptWithPassword(pass, a.payload);
+        if(theme){found = theme; break}
+      }
+
+      const resultDiv=document.getElementById('result'); resultDiv.innerHTML='';
+      if(found){
+        resultDiv.innerHTML=`<div style="padding:12px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));"><strong>Your assigned theme:</strong><div style="margin-top:8px;font-size:18px;font-weight:700">🎁 ${found}</div><div style="margin-top:10px;color:rgba(255,255,255,0.8)"><small>Keep your password secret — the organizer cannot see this unless they also have your password.</small></div></div>`;
+        log('Theme revealed for '+name);
+      }else{
+        resultDiv.innerHTML=`<div style="padding:12px;border-radius:8px;background:rgba(255,0,0,0.06);color:#ffdddd">Unable to decrypt. Make sure you loaded the correct encrypted JSON and used the right password.</div>`;
+        log('Failed decryption attempt for '+name);
+      }
+    });
+
+    // Accessibility tip: prefill names into participant UI for convenience
+    document.getElementById('participants').addEventListener('change', ()=>{
+      const first = document.getElementById('participants').value.split('\n')[0]||''; document.getElementById('pname').value = first.trim();
+    });
+  </script>
+</body>
+</html>
